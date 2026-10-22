@@ -1,5 +1,5 @@
 {
-  "ts": 1792631651914,
+  "ts": 1792634685715,
   "results": {
     "BD": {
       "fiat": "BDT",
@@ -20,8 +20,8 @@
     "LK": {
       "fiat": "LKR",
       "marketRate": 331.714106,
-      "p2pMedian": 338.45,
-      "offsetPct": 2,
+      "p2pMedian": 338.61,
+      "offsetPct": 2.1,
       "source": "binance",
       "nAds": 10
     },
@@ -68,8 +68,8 @@
     "CO": {
       "fiat": "COP",
       "marketRate": 3173.544697,
-      "p2pMedian": 3175.03,
-      "offsetPct": 0,
+      "p2pMedian": 3170.19,
+      "offsetPct": -0.1,
       "source": "binance",
       "nAds": 10
     },
@@ -84,15 +84,15 @@
     "GT": {
       "fiat": "GTQ",
       "marketRate": 7.646309,
-      "p2pMedian": 7.986,
-      "offsetPct": 4.4,
+      "p2pMedian": 7.988,
+      "offsetPct": 4.5,
       "source": "binance",
       "nAds": 10
     },
     "DO": {
       "fiat": "DOP",
       "marketRate": 61.409228,
-      "p2pMedian": 62.25,
+      "p2pMedian": 62.29,
       "offsetPct": 1.4,
       "source": "binance",
       "nAds": 10
@@ -100,7 +100,7 @@
     "HN": {
       "fiat": "HNL",
       "marketRate": 26.856452,
-      "p2pMedian": 28.07,
+      "p2pMedian": 28.06,
       "offsetPct": 4.5,
       "source": "binance",
       "nAds": 10
@@ -108,24 +108,24 @@
     "CR": {
       "fiat": "CRC",
       "marketRate": 455.578926,
-      "p2pMedian": 450.75,
-      "offsetPct": -1.1,
+      "p2pMedian": 451.25,
+      "offsetPct": -1,
       "source": "binance",
       "nAds": 10
     },
     "PY": {
       "fiat": "PYG",
       "marketRate": 5754.339077,
-      "p2pMedian": 5705.99,
-      "offsetPct": -0.8,
+      "p2pMedian": 5705.09,
+      "offsetPct": -0.9,
       "source": "binance",
       "nAds": 10
     },
     "ZM": {
       "fiat": "ZMW",
       "marketRate": 20.092925,
-      "p2pMedian": 20.47,
-      "offsetPct": 1.9,
+      "p2pMedian": 20.42,
+      "offsetPct": 1.6,
       "source": "binance",
       "nAds": 10
     }
