@@ -35,16 +35,26 @@ const CURRENCIES = [
   ['GT','GTQ'], ['DO','DOP'], ['HN','HNL'], ['CR','CRC'], ['PY','PYG'], ['ZM','ZMW']
 ];
 
+const MAX_BYTES = 8 * 1024 * 1024;
+const TIMEOUT_MS = 15000;
+
 function request(opts, body) {
   return new Promise((resolve) => {
     const req = https.request(opts, (res) => {
       let raw = '';
-      res.on('data', c => raw += c);
+      let bytes = 0;
+      res.on('data', c => {
+        bytes += c.length;
+        if (bytes > MAX_BYTES) { req.destroy(new Error('response too large')); return; }
+        raw += c;
+      });
+      res.on('error', () => resolve(null));
       res.on('end', () => {
         try { resolve(JSON.parse(raw)); }
         catch (e) { resolve(null); }
       });
     });
+    req.setTimeout(TIMEOUT_MS, () => req.destroy(new Error('timeout')));
     req.on('error', () => resolve(null));
     if (body) req.write(body);
     req.end();
@@ -52,7 +62,7 @@ function request(opts, body) {
 }
 
 // Binance P2P — POST to /bapi/c2c/v2/friendly/c2c/adv/search
-async function binance(fiat) {
+async function binance(fiat, fx) {
   const body = JSON.stringify({ asset: 'USDT', fiat, page: 1, rows: 10, tradeType: 'SELL' });
   const j = await request({
     method: 'POST', host: 'p2p.binance.com',
@@ -68,7 +78,7 @@ async function binance(fiat) {
 }
 
 // Bybit P2P — POST to /fiat/otc/item/online (side "0" = sell, i.e. BUY ads from searcher's perspective)
-async function bybit(fiat) {
+async function bybit(fiat, fx) {
   const body = JSON.stringify({
     userId: '', tokenId: 'USDT', currencyId: fiat, payment: [],
     side: '0', size: '10', page: '1', amount: '',
@@ -88,7 +98,7 @@ async function bybit(fiat) {
 }
 
 // OKX P2P — GET /v3/c2c/tradingOrders/books?side=sell&...
-async function okx(fiat) {
+async function okx(fiat, fx) {
   const path = '/v3/c2c/tradingOrders/books'
     + `?quoteCurrency=${fiat}&baseCurrency=USDT&side=sell`
     + '&paymentMethod=all&userType=all&showTrade=false&showFollow=false'
@@ -102,7 +112,7 @@ async function okx(fiat) {
   return ads.filter(a => a.price).map(a => parseFloat(a.price));
 }
 
-async function fetchAllSources(fiat) {
+async function fetchAllSources(fiat, fx) {
   // Try in order, return as soon as one returns ≥3 ads (thin-market guard).
   const sources = [
     ['binance', binance],
@@ -111,7 +121,7 @@ async function fetchAllSources(fiat) {
   ];
   for (const [name, fn] of sources) {
     try {
-      const prices = await fn(fiat);
+      const prices = await fn(fiat, fx);
       if (prices.length >= 3) return { source: name, prices };
     } catch (e) { /* try next */ }
   }
@@ -120,11 +130,13 @@ async function fetchAllSources(fiat) {
 
 async function fetchFx() {
   return new Promise((resolve) => {
-    https.get('https://open.er-api.com/v6/latest/USD', (res) => {
+    const req = https.get('https://open.er-api.com/v6/latest/USD', (res) => {
       let raw = '';
       res.on('data', c => raw += c);
       res.on('end', () => { try { resolve(JSON.parse(raw).rates); } catch (e) { resolve({}); } });
     });
+    req.setTimeout(TIMEOUT_MS, () => req.destroy(new Error('timeout')));
+    req.on('error', () => resolve({}));
   });
 }
 
@@ -134,7 +146,7 @@ async function fetchFx() {
   log('Currency | Mkt rate   | P2P med(5)   | offsetPct  | source   | n ads');
   log('---------|------------|--------------|------------|----------|------');
   for (const [code, fiat] of CURRENCIES) {
-    const { source, prices } = await fetchAllSources(fiat);
+    const { source, prices } = await fetchAllSources(fiat, fx);
     const mkt = fx[fiat];
     if (!prices.length) {
       log(`${code} ${fiat.padEnd(4)} | ${(mkt||0).toFixed(2).padStart(10)} | (none)       | null       | (none)   | 0`);
@@ -149,7 +161,7 @@ async function fetchFx() {
     await new Promise(r => setTimeout(r, 200));
   }
   if (JSON_ONLY) {
-    process.stdout.write(JSON.stringify({ ts: Date.now(), results }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ results }, null, 2) + '\n');
   } else {
     log('\nJSON:');
     log(JSON.stringify(results, null, 2));
